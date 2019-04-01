@@ -39,6 +39,8 @@ struct morse_data {
 	int on_dash;
 	int off;
 	int end;
+	int space;
+	int unit;
 };
 
 typedef struct morse_data morse_t;
@@ -134,7 +136,7 @@ static const char *text_to_teletone(morse_t *info, switch_stream_handle_t *strea
 		const char *code;
 
 		if (str[i] == ' ') {
-			stream->write_function(stream, "%%(%d,%d,1)", info->on_dash, info->end);
+			stream->write_function(stream, "%%(%d,%d,1)", info->on_dash, info->space);
 		} else if ((code = char_to_morse(str[i]))) {
 			for (j = 0; j < strlen(code); j++) {
 				int on = info->on_dot, off = info->off;
@@ -191,11 +193,14 @@ static int teletone_handler(teletone_generation_session_t *ts, teletone_tone_map
 
 static void init_info(morse_t *info)
 {
-	info->hz = 1000.0;
-	info->on_dot = 60;
-	info->on_dash = 180;
-	info->off = 60;
-	info->end = 420;
+	if (!info->unit) info->unit = 100;
+	if (!info->hz) info->hz = 1000;
+	
+	info->on_dot = info->unit;
+	info->on_dash = info->unit * 3;
+	info->off = info->unit;
+	info->end = info->unit * 3;
+	info->space = info->unit * 7;
 }
 
 
@@ -279,15 +284,11 @@ static void morse_text_param_tts(switch_speech_handle_t *sh, char *param, const 
 
 	if (!strcasecmp(param, "hz")) {
 		info->hz = atof(val);
-	} else if (!strcasecmp(param, "on_dot")) {
-		info->on_dot = atoi(val);
-	} else if (!strcasecmp(param, "on_dash")) {
-		info->on_dash = atoi(val);
-	} else if (!strcasecmp(param, "off")) {
-		info->off = atoi(val);
-	} else if (!strcasecmp(param, "end")) {
-		info->end = atoi(val);
+	} else if (!strcasecmp(param, "unit")) {
+		info->unit = atoi(val);
 	}
+
+	init_info(info);
 }
 
 static void morse_numeric_param_tts(switch_speech_handle_t *sh, char *param, int val)
@@ -297,15 +298,11 @@ static void morse_numeric_param_tts(switch_speech_handle_t *sh, char *param, int
 
 	if (!strcasecmp(param, "hz")) {
 		info->hz = val;
-	} else if (!strcasecmp(param, "on_dot")) {
-		info->on_dot = val;
-	} else if (!strcasecmp(param, "on_dash")) {
-		info->on_dash = val;
-	} else if (!strcasecmp(param, "off")) {
-		info->off = val;
-	} else if (!strcasecmp(param, "end")) {
-		info->end = val;
+	} else if (!strcasecmp(param, "unit")) {
+		info->unit = val;
 	}
+
+	init_info(info);
 }
 
 static void morse_float_param_tts(switch_speech_handle_t *sh, char *param, double val)
