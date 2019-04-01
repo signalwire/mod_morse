@@ -193,9 +193,9 @@ static void init_info(morse_t *info)
 {
 	info->hz = 1000.0;
 	info->on_dot = 60;
-	info->on_dash = 120;
-	info->off = 100;
-	info->end = 500;
+	info->on_dash = 180;
+	info->off = 60;
+	info->end = 420;
 }
 
 
