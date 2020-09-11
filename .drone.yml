@@ -1,0 +1,59 @@
+---
+kind: pipeline
+name: default
+
+steps:
+    - name: scan-build
+      image: signalwire/freeswitch-libs
+      pull: true
+      environment:
+        SSH_KEY:
+          from_secret: ssh_key   
+        GITHUB_CI_APP_PEM:          
+          from_secret: github_ci_app_pem          
+        SLACK_WEBHOOK_URL:
+          from_secret: slack_webhook_url
+        FSA_REPO_AUTH:
+          from_secret: fsa_repo_auth
+      commands:
+      - apt-get update && apt-get install -yq apt-transport-https ruby jq curl openssh-client gnupg2 wget build-essential autotools-dev lsb-release pkg-config automake autoconf libtool-bin clang-tools-4.0      
+      - echo "deb [trusted=yes] https://$FSA_REPO_AUTH@fsa.freeswitch.com/repo/deb/fsa/ $(lsb_release -sc) unstable" > /etc/apt/sources.list.d/freeswitch.list
+      - apt-get update && apt-get install -yq libfreeswitch-dev 
+      - ./bootstrap.sh
+      - ./configure
+      - mkdir -p scan-build
+      - echo '#!/bin/bash\nscan-build-4.0 -o ./scan-build/ make -j`nproc --all` |& tee ./scan-build-result.txt\nexitstatus=$${PIPESTATUS[0]}\necho $$exitstatus > ./scan-build-status.txt\n' > scan.sh
+      - chmod +x scan.sh
+      - ./scan.sh
+      - exitstatus=`cat ./scan-build-status.txt`
+      - echo "*** Exit status is $exitstatus"
+
+    - name: notify
+      image: signalwire/scan-build-notify
+      pull: true
+      environment:
+        GITHUB_CI_APP_PEM:
+          from_secret: github_ci_app_pem
+        SSH_KEY:
+          from_secret: ssh_key
+        SLACK_WEBHOOK_URL:
+          from_secret: slack_webhook_url
+      commands:
+      - /root/notify.sh
+      
+trigger:
+  branch:
+  - master
+
+trigger:
+  event:
+  - pull_request
+  - push
+
+image_pull_secrets:
+- .dockerconfigjson
+---
+kind: signature
+hmac: a077b28c81dc6f41f5155874f88e0cdca1837b35fb69b5e1e9d87e01a75d1e90
+
+...
