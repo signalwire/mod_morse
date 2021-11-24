@@ -27,6 +27,8 @@
 #include <switch.h>
 #include <unistd.h>
 
+#define UNUSED(x) (void)(x)
+
 SWITCH_MODULE_LOAD_FUNCTION(mod_morse_load);
 SWITCH_MODULE_SHUTDOWN_FUNCTION(mod_morse_shutdown);
 SWITCH_MODULE_DEFINITION(mod_morse, mod_morse_load, mod_morse_shutdown, NULL);
@@ -129,7 +131,7 @@ const char* morse_to_char (const char* str)
 static const char *text_to_teletone(morse_t *info, switch_stream_handle_t *stream, const char *str)
 {
 
-	int i,j;
+	size_t i,j;
 
 
 	for(i = 0; i < strlen(str); i++) {
@@ -159,8 +161,9 @@ static const char *text_to_teletone(morse_t *info, switch_stream_handle_t *strea
 
 static const char *text_to_morse(morse_t *info, switch_stream_handle_t *stream, const char *str)
 {
+	UNUSED(info);
 
-	int i;
+	size_t i;
 
 	for(i = 0; i < strlen(str); i++) {
 		const char *code;
@@ -206,6 +209,9 @@ static void init_info(morse_t *info)
 
 static switch_status_t morse_speech_open(switch_speech_handle_t *sh, const char *voice_name, int rate, int channels, switch_speech_flag_t *flags)
 {
+	UNUSED(voice_name);
+	UNUSED(flags);
+
 	morse_t *info = switch_core_alloc(sh->memory_pool, sizeof(*info));
 
 	switch_buffer_create_dynamic(&info->audio_buffer, 512, 1024, 0);
@@ -222,6 +228,8 @@ static switch_status_t morse_speech_open(switch_speech_handle_t *sh, const char 
 
 static switch_status_t morse_speech_close(switch_speech_handle_t *sh, switch_speech_flag_t *flags)
 {
+	UNUSED(flags);
+
 	morse_t *info = (morse_t *) sh->private_info;
 	assert(info != NULL);
 
@@ -233,6 +241,8 @@ static switch_status_t morse_speech_close(switch_speech_handle_t *sh, switch_spe
 
 static switch_status_t morse_speech_feed_tts(switch_speech_handle_t *sh, char *text, switch_speech_flag_t *flags)
 {
+	UNUSED(flags);
+
 	switch_status_t ret=SWITCH_STATUS_SUCCESS;
 	morse_t *info = (morse_t *) sh->private_info;
 
@@ -252,6 +262,8 @@ static switch_status_t morse_speech_feed_tts(switch_speech_handle_t *sh, char *t
 
 static switch_status_t morse_speech_read_tts(switch_speech_handle_t *sh, void *data, size_t *datalen, switch_speech_flag_t *flags)
 {
+	UNUSED(flags);
+
 	morse_t *info = (morse_t *) sh->private_info;
 	size_t read = *datalen;
 
@@ -334,6 +346,8 @@ SWITCH_STANDARD_APP(morse_function)
 
 SWITCH_STANDARD_API(morse_api_function)
 {
+	UNUSED(session);
+
 	morse_t info = { 0 };
 
 	if (!cmd) {
