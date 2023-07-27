@@ -1,0 +1,37 @@
+name: Build
+
+on:
+  push:
+    branches: ["master", "min/build-image"]
+  workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+jobs:
+  hash:
+    runs-on: ubuntu-latest
+    outputs:
+      HASH: ${{ steps.hash.outputs.short }}
+    steps:
+      - id: hash
+        uses: pr-mpt/actions-commit-hash@v2
+        with:
+          commit: ${{ github.sha }}
+  build:
+    needs: hash
+    uses: signalwire/actions-template/.github/workflows/ci-build.yml@main
+    with:
+      CONTAINER_SCAN: true
+      CONTAINER_TEST: false
+      PROJECT_NAME: "freeswitch-libs"
+      FILE: Dockerfile.ci
+      PUSH: true
+      RUNNER: ubuntu-latest-16-cores
+      SUBMODULES_RECURSIVE: true
+      SUBMODULES_PRIVATE: true
+      TAG: |
+        type=raw,priority=100,value=mod-morse-debian10-${{needs.hash.outputs.HASH}}
+    secrets: inherit

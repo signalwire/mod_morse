@@ -1,0 +1,6 @@
+ARG BASEIMAGE=signalwire/freeswitch:staging-calling-latest
+FROM ${BASEIMAGE}
+
+COPY . /sw/src/modules/mod_morse
+WORKDIR /sw/src/modules/mod_morse
+RUN ./bootstrap.sh -j`nproc --all` && autoreconf --force --install && ./configure && make -j`nproc --all` && make install
