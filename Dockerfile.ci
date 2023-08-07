@@ -1,7 +1,0 @@
-ARG BASEIMAGE=signalwire/freeswitch:staging-calling-latest
-FROM ${BASEIMAGE}
-
-COPY . /sw/src/modules/mod_morse
-WORKDIR /sw/src/modules/mod_morse
-RUN apt-get update -y && apt-get install -y libtool g++ cmake autoconf automake pkg-config
-RUN ./bootstrap.sh -j`nproc --all` && autoreconf --force --install && ./configure && make -j`nproc --all` && make install
